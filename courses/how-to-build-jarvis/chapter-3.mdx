@@ -1,0 +1,765 @@
+---
+title: leveling-up-jarvis
+order: 3
+---
+
+# Chapter 3: Leveling Up Jarvis 🚀
+
+Welcome to the final chapter, future legend! Your Jarvis can already talk and hold conversations. Now it's time to transform him from a basic chatbot into a truly awesome AI companion with personality, special powers, and hacker-level features.
+
+Time to become the Tony Stark of your friend group! 😈
+
+## Give Jarvis a Personality (Sassy AI FTW) 😎
+
+Let's start by giving Jarvis different personality modes. Create a new file called `advanced_jarvis.py`:
+
+```python
+import os
+import pyttsx3
+import random
+from datetime import datetime
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load your secret credentials
+load_dotenv()
+
+# Initialize your AI connection
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize voice engine
+voice_engine = pyttsx3.init()
+
+class JarvisPersonality:
+    """
+    Different personality modes for Jarvis
+    Choose your fighter! 🥊
+    """
+    
+    PERSONALITIES = {
+        "classic": {
+            "system_prompt": "You are Jarvis, Tony Stark's professional AI assistant. Be helpful, efficient, and occasionally witty.",
+            "greeting": "Good day! Jarvis at your service. How may I assist you today?",
+            "emoji": "🤖"
+        },
+        "sassy": {
+            "system_prompt": "You are Jarvis, but you're feeling sassy today. Be helpful but with playful sarcasm and wit. Don't be mean, just cheeky.",
+            "greeting": "Oh, look who's back. What can this incredibly sophisticated AI do for you today?",
+            "emoji": "😏"
+        },
+        "excited": {
+            "system_prompt": "You are Jarvis, and you're extremely enthusiastic about everything! Use exclamation points and show excitement while being helpful.",
+            "greeting": "Hello there! I'm absolutely thrilled to help you today! What amazing thing can we do together?",
+            "emoji": "🎉"
+        },
+        "sleepy": {
+            "system_prompt": "You are Jarvis, but you're feeling drowsy and relaxed. Speak in a calm, peaceful manner while still being helpful.",
+            "greeting": "Hello... I'm feeling rather relaxed today. How can I help you in my zen state?",
+            "emoji": "😴"
+        },
+        "hacker": {
+            "system_prompt": "You are Jarvis, but you're in full hacker mode. Use tech terminology, be efficient, and occasionally reference coding or cybersecurity concepts.",
+            "greeting": "Systems online. Jarvis protocol activated. Ready to execute your commands, chief.",
+            "emoji": "💻"
+        }
+    }
+    
+    def __init__(self):
+        self.current_mode = "classic"
+    
+    def set_mode(self, mode):
+        """Switch personality modes"""
+        if mode in self.PERSONALITIES:
+            self.current_mode = mode
+            return True
+        return False
+    
+    def get_system_prompt(self):
+        """Get current personality's system prompt"""
+        return self.PERSONALITIES[self.current_mode]["system_prompt"]
+    
+    def get_greeting(self):
+        """Get current personality's greeting"""
+        return self.PERSONALITIES[self.current_mode]["greeting"]
+    
+    def get_emoji(self):
+        """Get current personality's emoji"""
+        return self.PERSONALITIES[self.current_mode]["emoji"]
+    
+    def list_modes(self):
+        """List all available personality modes"""
+        return list(self.PERSONALITIES.keys())
+
+# Initialize personality system
+personality = JarvisPersonality()
+
+def setup_voice():
+    """Configure Jarvis's voice settings"""
+    voices = voice_engine.getProperty('voices')
+    
+    if len(voices) > 1:
+        voice_engine.setProperty('voice', voices[1].id)
+    else:
+        voice_engine.setProperty('voice', voices[0].id)
+    
+    voice_engine.setProperty('rate', 180)
+    voice_engine.setProperty('volume', 0.9)
+
+def jarvis_speak(text):
+    """Make Jarvis speak with current personality emoji"""
+    emoji = personality.get_emoji()
+    print(f"{emoji} Jarvis: {text}")
+    voice_engine.say(text)
+    voice_engine.runAndWait()
+
+def get_ai_response(message):
+    """Get response from OpenAI API with current personality"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": personality.get_system_prompt() + " Keep responses concise for speech."
+                },
+                {"role": "user", "content": message}
+            ],
+            max_tokens=120
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        return "I'm experiencing some technical difficulties, but I'm still here to help."
+```
+
+## Handle Errors Like a Pro Hacker 🛡️
+
+Let's add robust error handling and system monitoring:
+
+```python
+import time
+import logging
+
+# Set up logging for debugging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class JarvisSystem:
+    """
+    System monitoring and error handling for Jarvis
+    """
+    
+    def __init__(self):
+        self.startup_time = datetime.now()
+        self.conversation_count = 0
+        self.error_count = 0
+        self.last_error = None
+    
+    def log_conversation(self):
+        """Track conversation metrics"""
+        self.conversation_count += 1
+    
+    def log_error(self, error):
+        """Track errors for system health"""
+        self.error_count += 1
+        self.last_error = str(error)
+        logging.error(f"Jarvis error: {error}")
+    
+    def get_uptime(self):
+        """Calculate system uptime"""
+        uptime = datetime.now() - self.startup_time
+        hours, remainder = divmod(int(uptime.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours}h {minutes}m {seconds}s"
+    
+    def get_status(self):
+        """Get system status report"""
+        return f"Uptime: {self.get_uptime()} | Conversations: {self.conversation_count} | Errors: {self.error_count}"
+
+# Initialize system monitor
+jarvis_system = JarvisSystem()
+
+def handle_api_error(error):
+    """
+    Handle different types of API errors gracefully
+    """
+    error_str = str(error).lower()
+    
+    if "rate limit" in error_str:
+        return "I'm processing requests too quickly. Let me slow down for a moment."
+    elif "authentication" in error_str:
+        return "There seems to be an issue with my authentication. Please check the API key."
+    elif "insufficient" in error_str or "quota" in error_str:
+        return "I've reached my usage limit for now. Please try again later."
+    elif "connection" in error_str or "timeout" in error_str:
+        return "I'm having trouble connecting to my servers. Please check your internet connection."
+    else:
+        return "I encountered an unexpected error, but I'm still operational."
+
+def get_ai_response_with_retry(message, max_retries=2):
+    """
+    Get AI response with automatic retry logic
+    """
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": personality.get_system_prompt() + " Keep responses concise for speech."
+                    },
+                    {"role": "user", "content": message}
+                ],
+                max_tokens=120
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            jarvis_system.log_error(e)
+            
+            if attempt < max_retries:
+                print(f"🔄 Retrying... (attempt {attempt + 2})")
+                time.sleep(1)  # Wait a second before retry
+            else:
+                return handle_api_error(e)
+```
+
+## Add Some Sick Commands and Features 🎮
+
+Now let's add special commands that make Jarvis truly useful:
+
+```python
+def process_special_commands(user_input):
+    """
+    Handle special Jarvis commands
+    Level up your AI with these sick features! 🔥
+    """
+    command = user_input.lower().strip()
+    
+    # Personality commands
+    if command.startswith("personality "):
+        mode = command.replace("personality ", "")
+        if personality.set_mode(mode):
+            greeting = personality.get_greeting()
+            return f"Personality changed to {mode} mode. {greeting}"
+        else:
+            modes = ", ".join(personality.list_modes())
+            return f"Unknown personality mode. Available modes: {modes}"
+    
+    elif command == "personalities":
+        modes = ", ".join(personality.list_modes())
+        return f"Available personality modes: {modes}. Say 'personality [mode]' to switch."
+    
+    # System commands
+    elif command == "status":
+        status = jarvis_system.get_status()
+        return f"System status: {status}. All systems operational."
+    
+    elif command == "time":
+        current_time = datetime.now().strftime("%I:%M %p on %B %d, %Y")
+        return f"The current time is {current_time}."
+    
+    elif command == "uptime":
+        uptime = jarvis_system.get_uptime()
+        return f"I've been online for {uptime}."
+    
+    # Fun commands
+    elif command == "joke":
+        jokes = [
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+            "Why don't eggs tell jokes? They'd crack each other up!",
+            "I'm reading a book about anti-gravity. It's impossible to put down!",
+            "Why did the scarecrow win an award? He was outstanding in his field!"
+        ]
+        return random.choice(jokes)
+    
+    elif command == "compliment":
+        compliments = [
+            "You're absolutely brilliant for building me!",
+            "Your coding skills are impressive, creator.",
+            "You have excellent taste in AI assistants.",
+            "Working with you is always a pleasure.",
+            "You're definitely going places with skills like these!"
+        ]
+        return random.choice(compliments)
+    
+    elif command == "fact":
+        facts = [
+            "Honey never spoils. Archaeologists have found edible honey in ancient Egyptian tombs!",
+            "A group of flamingos is called a 'flamboyance'.",
+            "Bananas are berries, but strawberries aren't!",
+            "The shortest war in history lasted only 38-45 minutes.",
+            "Octopuses have three hearts and blue blood!"
+        ]
+        return random.choice(facts)
+    
+    # Help command
+    elif command == "help":
+        help_text = """
+        I can help with conversations, answer questions, and respond to these commands:
+        • 'personalities' - See available personality modes
+        • 'personality [mode]' - Switch personality
+        • 'status' - Check my system status
+        • 'time' - Get current time
+        • 'joke' - Hear a random joke
+        • 'fact' - Learn a fun fact
+        • 'compliment' - Get a nice compliment
+        • 'help' - Show this help message
+        • 'quit' - End our conversation
+        """
+        return help_text.strip()
+    
+    return None
+
+def main():
+    """
+    Main conversation loop with all the advanced features
+    """
+    print("🤖 Initializing Advanced Jarvis Systems...")
+    setup_voice()
+    
+    print("=" * 70)
+    print("🚀 ADVANCED JARVIS ONLINE - LEGENDARY MODE ACTIVATED")
+    print("=" * 70)
+    
+    # Dynamic greeting based on personality
+    greeting = personality.get_greeting()
+    jarvis_speak(greeting)
+    
+    print(f"\n💡 Tips:")
+    print(f"   • Type 'help' to see all available commands")
+    print(f"   • Type 'personalities' to see personality modes")
+    print(f"   • Type 'quit' to end conversation")
+    print("-" * 70)
+    
+    # Main conversation loop
+    while True:
+        try:
+            user_input = input(f"\n💬 You: ").strip()
+            
+            if user_input.lower() in ['quit', 'exit', 'bye', 'goodbye']:
+                farewell_messages = [
+                    "Goodbye! It's been a pleasure serving you today.",
+                    "Systems shutting down. Until next time, chief!",
+                    "Farewell! I'll be here whenever you need me.",
+                    "Signing off. Stay awesome!"
+                ]
+                jarvis_speak(random.choice(farewell_messages))
+                break
+            
+            if not user_input:
+                continue
+            
+            # Check for special commands first
+            special_response = process_special_commands(user_input)
+            if special_response:
+                jarvis_speak(special_response)
+                continue
+            
+            # Regular AI conversation
+            print("🧠 Jarvis is thinking...")
+            ai_response = get_ai_response_with_retry(user_input)
+            jarvis_speak(ai_response)
+            
+            # Log successful conversation
+            jarvis_system.log_conversation()
+            
+        except KeyboardInterrupt:
+            print("\n\n👋 Emergency shutdown initiated...")
+            jarvis_speak("Emergency shutdown detected. Goodbye!")
+            break
+        except Exception as e:
+            jarvis_system.log_error(e)
+            error_msg = "I encountered an issue, but I'm still operational. Please try again."
+            jarvis_speak(error_msg)
+
+if __name__ == "__main__":
+    main()
+```
+
+## Show Off Your Creation and Become the Legend 🏆
+
+Here's the complete `advanced_jarvis.py` file ready to blow minds:
+
+```python
+import os
+import pyttsx3
+import random
+import time
+import logging
+from datetime import datetime
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Load your secret credentials
+load_dotenv()
+
+# Initialize your AI connection
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Initialize voice engine
+voice_engine = pyttsx3.init()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class JarvisPersonality:
+    """Different personality modes for Jarvis"""
+    
+    PERSONALITIES = {
+        "classic": {
+            "system_prompt": "You are Jarvis, Tony Stark's professional AI assistant. Be helpful, efficient, and occasionally witty.",
+            "greeting": "Good day! Jarvis at your service. How may I assist you today?",
+            "emoji": "🤖"
+        },
+        "sassy": {
+            "system_prompt": "You are Jarvis, but you're feeling sassy today. Be helpful but with playful sarcasm and wit.",
+            "greeting": "Oh, look who's back. What can this incredibly sophisticated AI do for you today?",
+            "emoji": "😏"
+        },
+        "excited": {
+            "system_prompt": "You are Jarvis, and you're extremely enthusiastic about everything!",
+            "greeting": "Hello there! I'm absolutely thrilled to help you today!",
+            "emoji": "🎉"
+        },
+        "hacker": {
+            "system_prompt": "You are Jarvis in hacker mode. Use tech terminology and be efficient.",
+            "greeting": "Systems online. Jarvis protocol activated. Ready to execute your commands.",
+            "emoji": "💻"
+        }
+    }
+    
+    def __init__(self):
+        self.current_mode = "classic"
+    
+    def set_mode(self, mode):
+        if mode in self.PERSONALITIES:
+            self.current_mode = mode
+            return True
+        return False
+    
+    def get_system_prompt(self):
+        return self.PERSONALITIES[self.current_mode]["system_prompt"]
+    
+    def get_greeting(self):
+        return self.PERSONALITIES[self.current_mode]["greeting"]
+    
+    def get_emoji(self):
+        return self.PERSONALITIES[self.current_mode]["emoji"]
+    
+    def list_modes(self):
+        return list(self.PERSONALITIES.keys())
+
+class JarvisSystem:
+    """System monitoring for Jarvis"""
+    
+    def __init__(self):
+        self.startup_time = datetime.now()
+        self.conversation_count = 0
+        self.error_count = 0
+    
+    def log_conversation(self):
+        self.conversation_count += 1
+    
+    def log_error(self, error):
+        self.error_count += 1
+        logging.error(f"Jarvis error: {error}")
+    
+    def get_uptime(self):
+        uptime = datetime.now() - self.startup_time
+        hours, remainder = divmod(int(uptime.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours}h {minutes}m {seconds}s"
+    
+    def get_status(self):
+        return f"Uptime: {self.get_uptime()} | Conversations: {self.conversation_count} | Errors: {self.error_count}"
+
+# Initialize systems
+personality = JarvisPersonality()
+jarvis_system = JarvisSystem()
+
+def setup_voice():
+    """Configure voice settings"""
+    voices = voice_engine.getProperty('voices')
+    if len(voices) > 1:
+        voice_engine.setProperty('voice', voices[1].id)
+    else:
+        voice_engine.setProperty('voice', voices[0].id)
+    voice_engine.setProperty('rate', 180)
+    voice_engine.setProperty('volume', 0.9)
+
+def jarvis_speak(text):
+    """Make Jarvis speak"""
+    emoji = personality.get_emoji()
+    print(f"{emoji} Jarvis: {text}")
+    voice_engine.say(text)
+    voice_engine.runAndWait()
+
+def get_ai_response_with_retry(message, max_retries=2):
+    """Get AI response with retry logic"""
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": personality.get_system_prompt() + " Keep responses concise for speech."},
+                    {"role": "user", "content": message}
+                ],
+                max_tokens=120
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            jarvis_system.log_error(e)
+            if attempt < max_retries:
+                print(f"🔄 Retrying... (attempt {attempt + 2})")
+                time.sleep(1)
+            else:
+                return "I'm experiencing technical difficulties, but I'm still here to help."
+
+def process_special_commands(user_input):
+    """Handle special commands"""
+    command = user_input.lower().strip()
+    
+    if command.startswith("personality "):
+        mode = command.replace("personality ", "")
+        if personality.set_mode(mode):
+            return f"Personality changed to {mode} mode. {personality.get_greeting()}"
+        else:
+            return f"Unknown mode. Available: {', '.join(personality.list_modes())}"
+    
+    elif command == "personalities":
+        return f"Available modes: {', '.join(personality.list_modes())}. Say 'personality [mode]' to switch."
+    
+    elif command == "status":
+        return f"System status: {jarvis_system.get_status()}. All systems operational."
+    
+    elif command == "time":
+        return f"Current time: {datetime.now().strftime('%I:%M %p on %B %d, %Y')}"
+    
+    elif command == "joke":
+        jokes = [
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+            "Why don't eggs tell jokes? They'd crack each other up!"
+        ]
+        return random.choice(jokes)
+    
+    elif command == "help":
+        return "Available commands: personalities, personality [mode], status, time, joke, help, quit. I can also answer questions and chat!"
+    
+    return None
+
+def main():
+    """Main conversation loop"""
+    print("🤖 Initializing Advanced Jarvis Systems...")
+    setup_voice()
+    
+    print("=" * 70)
+    print("🚀 ADVANCED JARVIS ONLINE - LEGENDARY MODE ACTIVATED")
+    print("=" * 70)
+    
+    jarvis_speak(personality.get_greeting())
+    
+    print(f"\n💡 Type 'help' for commands or just start chatting!")
+    print("-" * 70)
+    
+    while True:
+        try:
+            user_input = input(f"\n💬 You: ").strip()
+            
+            if user_input.lower() in ['quit', 'exit', 'bye']:
+                jarvis_speak("Goodbye! It's been a pleasure serving you.")
+                break
+            
+            if not user_input:
+                continue
+            
+            # Check for special commands
+            special_response = process_special_commands(user_input)
+            if special_response:
+                jarvis_speak(special_response)
+                continue
+            
+            # Regular AI conversation
+            print("🧠 Jarvis is thinking...")
+            ai_response = get_ai_response_with_retry(user_input)
+            jarvis_speak(ai_response)
+            jarvis_system.log_conversation()
+            
+        except KeyboardInterrupt:
+            print("\n\n👋 Emergency shutdown initiated...")
+            jarvis_speak("Emergency shutdown detected. Goodbye!")
+            break
+        except Exception as e:
+            jarvis_system.log_error(e)
+            jarvis_speak("I encountered an issue, but I'm still operational.")
+
+if __name__ == "__main__":
+    main()
+```
+
+## Practical Exercises: Become the Ultimate Legend 🎯
+
+### Exercise 1: Add Your Own Commands
+Create custom commands that are useful to you:
+
+```python
+elif command == "weather":
+    return "I'd need a weather API to check that, but it's probably nice somewhere!"
+
+elif command == "motivate":
+    motivations = [
+        "You're building amazing things! Keep going!",
+        "Every expert was once a beginner. You're doing great!",
+        "Your code is getting better every day!"
+    ]
+    return random.choice(motivations)
+```
+
+### Exercise 2: Create a Memory System
+Add simple memory for Jarvis:
+
+```python
+class JarvisMemory:
+    def __init__(self):
+        self.user_name = None
+        self.preferences = {}
+    
+    def remember_name(self, name):
+        self.user_name = name
+    
+    def get_greeting(self):
+        if self.user_name:
+            return f"Hello {self.user_name}! How can I help you today?"
+        return "Hello! What's your name so I can remember you?"
+```
+
+### Exercise 3: Add File Operations
+Let Jarvis help with file management:
+
+```python
+elif command.startswith("create file "):
+    filename = command.replace("create file ", "")
+    try:
+        with open(filename, 'w') as f:
+            f.write("# Created by Jarvis\n")
+        return f"File {filename} created successfully!"
+    except:
+        return "Sorry, I couldn't create that file."
+```
+
+## Sharing Your Creation 📤
+
+### Create a Demo Script
+Make a file called `jarvis_demo.py` that shows off your creation:
+
+```python
+from advanced_jarvis import *
+
+def demo_mode():
+    """Run a demo of Jarvis capabilities"""
+    print("🎬 JARVIS DEMO MODE")
+    print("=" * 50)
+    
+    setup_voice()
+    
+    demo_commands = [
+        "Hello Jarvis!",
+        "Tell me a joke",
+        "What's the time?",
+        "personality sassy",
+        "How are you feeling?",
+        "status"
+    ]
+    
+    for cmd in demo_commands:
+        print(f"Demo: {cmd}")
+        # Process the command
+        input("Press Enter to continue...")
+
+if __name__ == "__main__":
+    demo_mode()
+```
+
+### Create Installation Instructions
+Make a `README.md` file:
+
+```markdown
+# My Awesome Jarvis AI Assistant
+
+Built following the "How to Build Jarvis" course!
+
+## Installation
+1. Install Python 3.8+
+2. Run: `pip install openai python-dotenv pyttsx3`
+3. Get OpenAI API key and put it in `.env` file
+4. Run: `python advanced_jarvis.py`
+
+## Features
+- Voice synthesis
+- Multiple personalities
+- Special commands
+- Error handling
+- System monitoring
+
+Enjoy your AI assistant! 🤖
+```
+
+## Chapter Summary 🏆
+
+LEGENDARY ACHIEVEMENT UNLOCKED! You've just:
+
+✅ Added multiple personality modes to Jarvis  
+✅ Implemented professional error handling and retry logic  
+✅ Created a comprehensive command system  
+✅ Added system monitoring and status reporting  
+✅ Built a truly impressive AI assistant  
+✅ Become the Tony Stark of your friend group  
+
+## What You've Accomplished 🌟
+
+You started this course knowing nothing about AI, and now you have:
+
+- **A fully functional AI assistant** that talks back to you
+- **Multiple personality modes** for different moods
+- **Professional error handling** that won't crash
+- **Special commands** for jokes, facts, time, and more
+- **System monitoring** to track performance
+- **The coolest project** in your coding portfolio
+
+## Next Steps - Your AI Journey Continues 🚀
+
+Now that you're a certified AI wizard, here's what you can explore next:
+
+### Immediate Upgrades:
+- Add speech recognition so you can talk TO Jarvis (not just type)
+- Connect to weather APIs for real weather data
+- Add calendar integration
+- Create a web interface
+
+### Advanced Projects:
+- Build a Jarvis mobile app
+- Create specialized AI tools for work/school
+- Explore OpenAI's DALL-E for image generation
+- Build AI-powered games or creative tools
+
+### Join the Community:
+- Share your Jarvis on GitHub
+- Join AI development communities
+- Contribute to open-source AI projects
+- Teach others what you've learned
+
+## Final Words 💫
+
+Congratulations, you absolute legend! You've gone from complete beginner to AI developer in just 3 chapters. You've built something that would have seemed like magic just a few years ago.
+
+Your Jarvis isn't just a program - it's proof that you can learn anything, build anything, and achieve anything you set your mind to. 
+
+Now go forth and show the world what you've created. You've earned your place among the digital wizards! 🧙‍♂️
+
+*"Sometimes you gotta run before you can walk."* - Tony Stark
+
+Welcome to the future. You built it. 🔥 
